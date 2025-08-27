@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose env
+        run: |
+          # Minimal env so compose is happy (we're not calling /explain in tests)
+          cat > .env <<'ENV'
+          OPENAI_API_KEY=unused
+          QDRANT_URL=http://qdrant:6333
+          NEXT_PUBLIC_API_BASE=http://localhost:8000
+          # Azure fields not needed for current tests; add real ones later if you test /explain
+          AZURE_OPENAI_ENDPOINT=https://example.openai.azure.com
+          AZURE_OPENAI_API_KEY=dummy
+          AZURE_OPENAI_API_VERSION=2024-10-21
+          AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o-mini
+          AZURE_OPENAI_EMBED_DEPLOYMENT=text-embedding-3-small
+          ENV
+
+      - name: Build API & Qdrant
+        run: docker compose build api qdrant
+
+      - name: Start API & Qdrant
+        run: docker compose up -d qdrant api
+
+      - name: Install dev deps inside API container
+        run: docker compose exec -T api pip install -r /app/requirements-dev.txt
+
+      - name: Run tests
+        run: docker compose exec -T api pytest -q
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          echo "::group::API logs"
+          docker compose logs api
+          echo "::endgroup::"
+          echo "::group::Qdrant logs"
+          docker compose logs qdrant
+          echo "::endgroup::"
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v

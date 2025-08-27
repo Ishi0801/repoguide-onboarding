@@ -1,0 +1,12 @@
+name: RAG Evals (stub)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run RAGAS (placeholder)
+        run: echo "TODO: add RAGAS faithfulness + answer relevance gates"

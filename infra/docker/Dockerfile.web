@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+WORKDIR /app
+COPY apps/web/package.json apps/web/pnpm-lock.yaml* ./
+RUN corepack enable && corepack prepare pnpm@9.7.1 --activate
+RUN pnpm install
+
+COPY apps/web ./
+ENV PORT=3000
+EXPOSE 3000
+CMD ["pnpm", "dev", "-p", "3000", "-H", "0.0.0.0"]
