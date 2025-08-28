@@ -14,7 +14,6 @@ jobs:
 
       - name: Set up Docker Compose env
         run: |
-          # Minimal env so compose is happy (we're not calling /explain in tests)
           cat > .env <<'ENV'
           OPENAI_API_KEY=unused
           QDRANT_URL=http://qdrant:6333
@@ -33,11 +32,28 @@ jobs:
       - name: Start API & Qdrant
         run: docker compose up -d qdrant api
 
-      - name: Install dev deps inside API container
-        run: docker compose exec -T api pip install -r /app/requirements-dev.txt
+      # NEW: copy requirements-dev.txt and tests/ into the running API container
+      - name: Copy test assets into API container
+        run: |
+          CID=$(docker compose ps -q api)
+          docker cp requirements-dev.txt "$CID":/tmp/requirements-dev.txt
+          docker cp tests "$CID":/app/tests
 
-      - name: Run tests
-        run: docker compose exec -T api pytest -q
+      # NEW: install dev deps (from /tmp) and run pytest with PYTHONPATH=/app/src
+      - name: Run tests (robust)
+        run: |
+          docker compose exec -T api sh -lc '
+            set -e
+            export PYTHONPATH=/app/src:$PYTHONPATH
+            python -m pip install --upgrade pip
+            if [ -f /tmp/requirements-dev.txt ]; then
+              pip install -r /tmp/requirements-dev.txt
+            else
+              echo "No /tmp/requirements-dev.txt; installing pytest+httpx directly"
+              pip install pytest httpx
+            fi
+            pytest -q /app/tests
+          '
 
       - name: Dump logs on failure
         if: failure()
