@@ -1,12 +1,13 @@
 name: Preview (stub)
-
 on:
   pull_request:
-
+    paths:
+      - 'apps/web/**'
+      - 'infra/**'
+      - '.github/workflows/preview.yml'
 jobs:
   preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Preview stub
-        run: echo "Spin up ephemeral preview on your platform (Render/Fly/Heroku)"
+      - run: echo "Preview for web/infra changes"
