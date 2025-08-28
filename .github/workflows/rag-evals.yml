@@ -1,12 +1,9 @@
 name: RAG Evals
-
 on:
   workflow_dispatch:
 
 jobs:
-  evals:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Run RAGAS (placeholder)
-        run: echo "TODO: add RAGAS faithfulness + answer relevance gates"
+      - run: echo "Manual only; skipping until secrets are set."
