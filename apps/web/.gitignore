@@ -1,0 +1,6 @@
+.env
+apps/web/node_modules
+apps/web/.next
+apps/web/.pnpm-store
+src/ext/
+qdrant_data/
